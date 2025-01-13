@@ -11,6 +11,7 @@ watch(data, () => {
 
 watch(status, () => {
     if (status.value === "OPEN") {
+        console.log("this ran");
         send({ message: "Hello World" });
     }
 });

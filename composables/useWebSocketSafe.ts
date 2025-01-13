@@ -8,7 +8,7 @@ type UseWebSocketSafeOptions<T extends z.ZodType> = UseWebSocketOptions & {
 };
 
 export function useWebSocketSafe<T extends z.ZodType>({
-  url = "http://localhost:3000/socket",
+  url = "http://localhost:3000/board/1",
   schema,
   ...options
 }: UseWebSocketSafeOptions<T>) {
@@ -26,7 +26,6 @@ export function useWebSocketSafe<T extends z.ZodType>({
   });
 
   const send = (data: z.infer<T>) => {
-    console.log(data);
     socket.send(JSON.stringify(data));
   };
 
