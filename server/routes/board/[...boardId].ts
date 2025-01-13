@@ -1,9 +1,16 @@
+import { auth } from "@auth/server";
+
 export default defineWebSocketHandler({
-  open(peer) {
+  async open(peer) {
     if (!peer.request) {
       peer.close();
       return;
     }
+
+    const headers = peer.request.headers as Headers;
+    const session = await auth.api.getSession({ headers });
+    // console.log(session);
+
     const url = new URL(peer.request.url as string);
     const boardId = url.pathname.split("/").pop();
     console.log("BoardId is: ", boardId);
