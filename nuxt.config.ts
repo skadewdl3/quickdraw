@@ -2,10 +2,22 @@ import { resolve } from "node:path";
 
 export default defineNuxtConfig({
   compatibilityDate: "2024-11-01",
+  experimental: {
+    appManifest: false,
+  },
   nitro: {
     experimental: {
       websocket: true,
     },
+  },
+  imports: {
+    dirs: ["composables/**"],
+    presets: [
+      {
+        from: "zod",
+        imports: ["z"],
+      },
+    ],
   },
   devtools: { enabled: true },
   modules: ["@nuxtjs/tailwindcss", "shadcn-nuxt", "@nuxtjs/color-mode"],

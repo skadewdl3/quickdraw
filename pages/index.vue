@@ -1,13 +1,18 @@
 <script setup lang="ts">
-import { useWebSocket } from "@vueuse/core";
 const x = ref(0);
 
-const { status, data, send, open, close } = useWebSocket(
-    "ws://localhost:3000/_ws",
-);
+const { status, data, send, open, close } = useWebSocketSafe({
+    schema: z.object({ message: z.string() }),
+});
 
-watch([status, data], () => {
+watch(data, () => {
     console.log({ status: status.value, data: data.value });
+});
+
+watch(status, () => {
+    if (status.value === "OPEN") {
+        send({ message: "Hello World" });
+    }
 });
 </script>
 
