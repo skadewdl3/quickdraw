@@ -2,22 +2,21 @@
 const x = ref(0);
 
 const { status, data, send, open, close } = useWebSocketSafe({
-    schema: z.object({ message: z.string() }),
+  schema: z.object({ message: z.string() }),
 });
 
 watch(data, () => {
-    console.log({ status: status.value, data: data.value });
+  console.log({ status: status.value, data: data.value });
 });
 
 watch(status, () => {
-    if (status.value === "OPEN") {
-        console.log("this ran");
-        send({ message: "Hello World" });
-    }
+  if (status.value === "OPEN") {
+    send({ message: "Hello World" });
+  }
 });
 </script>
 
 <template>
-    <p>{{ x }}</p>
-    <Button>Hello World</Button>
+  <p>{{ x }}</p>
+  <Button>Hello World</Button>
 </template>
