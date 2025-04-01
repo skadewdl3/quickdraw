@@ -12,8 +12,10 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Schema, z } from "zod";
-import auth from "@auth/client";
 import Result from "@/lib/result";
+
+const { $auth } = useNuxtApp();
+const router = useRouter();
 
 const schema = z
   .object({
@@ -51,24 +53,38 @@ watch(
   { deep: true },
 );
 
-const onSubmit = () => {
+const onSubmit = async () => {
   let res = Result.wrap(schema.parse, formData.value);
 
   if (res.isErr) {
     let err = res.unwrapErr();
-    if (err instanceof z.ZodError) {
-      err.errors.forEach((error) => {
-        if (error.path) {
-          errors.value[error.path[0] as SchemaKeys] = error.message;
-        }
-      });
-    }
+    if (!(err instanceof z.ZodError)) return;
+
+    err.errors.forEach((error) => {
+      if (error.path) {
+        errors.value[error.path[0] as SchemaKeys] = error.message;
+      }
+    });
     return;
   }
 
   let data = res.unwrap();
-  console.log(data);
-  // auth.api.signUp.email(data);
+  let authResult = await Result.wrapAsync($auth.signUp.email, data);
+
+  if (authResult.isErr) {
+    // TODO: show error toast
+    console.log("Unknown error: ", authResult.unwrapErr());
+    return;
+  }
+
+  let authRes = authResult.unwrap();
+  if (authRes.error) {
+    // TODO: show error toast
+    console.log("Sign up Error: ", authRes.error);
+    return;
+  }
+
+  router.push("/login");
 };
 </script>
 

@@ -51,4 +51,15 @@ export default class Result<T, E> {
       return Result.Err(error as E);
     }
   }
+
+  static async wrapAsync<T, A extends any[], E = unknown>(
+    fn: (...args: A) => Promise<T>,
+    ...args: A
+  ): Promise<Result<T, E>> {
+    try {
+      return Result.Ok(await fn(...args));
+    } catch (error) {
+      return Result.Err(error as E);
+    }
+  }
 }
