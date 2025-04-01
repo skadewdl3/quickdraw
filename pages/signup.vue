@@ -11,68 +11,80 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { z } from "zod";
+import { Schema, z } from "zod";
+import Result from "@/lib/result";
 
-const email = ref("");
-const password = ref("");
-const confirmPassword = ref("");
-const errors = ref<Record<string, string>>({});
-
-// Watch for changes and clear corresponding errors
-watch(email, () => {
-  if (errors.value.email) {
-    errors.value.email = "";
-  }
-});
-
-watch(password, () => {
-  if (errors.value.password) {
-    errors.value.password = "";
-  }
-});
-
-watch(confirmPassword, () => {
-  if (errors.value.confirmPassword) {
-    errors.value.confirmPassword = "";
-  }
-});
+const { $auth } = useNuxtApp();
+const router = useRouter();
 
 const schema = z
   .object({
     email: z.string().email("Please enter a valid email address"),
     password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string(),
+    name: z.string().min(1, "Name cannot be empty"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
   });
 
-const onSubmit = () => {
-  errors.value = {};
-  try {
-    schema.parse({
-      email: email.value,
-      password: password.value,
-      confirmPassword: confirmPassword.value,
-    });
-    // Form is valid, handle submission
-    console.log({
-      email: email.value,
-      password: password.value,
-      confirmPassword: confirmPassword.value,
-    });
-  } catch (err) {
-    if (err instanceof z.ZodError) {
-      err.errors.forEach((error) => {
-        if (error.path) {
-          errors.value[error.path[0]] = error.message;
-        }
-      });
+type SchemaKeys = keyof z.infer<typeof schema>;
+
+const formData = ref<z.infer<typeof schema>>({
+  email: "",
+  password: "",
+  confirmPassword: "",
+  name: "",
+});
+
+const errors = ref<Partial<Record<SchemaKeys, string>>>({});
+
+// Watch for changes and clear corresponding errors
+watch(
+  formData,
+  () => {
+    for (let key of Object.keys(formData.value) as SchemaKeys[]) {
+      if (errors.value[key]) {
+        errors.value[key] = "";
+      }
     }
-  } finally {
-    console.log(errors.value);
+  },
+  { deep: true },
+);
+
+const onSubmit = async () => {
+  let res = Result.wrap(schema.parse, formData.value);
+
+  if (res.isErr) {
+    let err = res.unwrapErr();
+    if (!(err instanceof z.ZodError)) return;
+
+    err.errors.forEach((error) => {
+      if (error.path) {
+        errors.value[error.path[0] as SchemaKeys] = error.message;
+      }
+    });
+    return;
   }
+
+  let data = res.unwrap();
+  let authResult = await Result.wrapAsync($auth.signUp.email, data);
+
+  if (authResult.isErr) {
+    // TODO: show error toast
+    console.log("Unknown error: ", authResult.unwrapErr());
+    return;
+  }
+
+  let authRes = authResult.unwrap();
+  if (authRes.error) {
+    // TODO: show error toast
+    console.log("Sign up Error: ", authRes.error);
+    return;
+  }
+
+  router.push("/login");
 };
 </script>
 
@@ -87,12 +99,25 @@ const onSubmit = () => {
         <form @submit.prevent="onSubmit">
           <div class="grid gap-4">
             <div class="grid gap-2">
+              <Label for="email">Name</Label>
+              <Input
+                id="name"
+                type="name"
+                placeholder="John Doe"
+                v-model="formData.name"
+                :class="{ 'border-red-500': errors.name }"
+              />
+              <span v-if="errors.name" class="text-sm text-red-500">{{
+                errors.name
+              }}</span>
+            </div>
+            <div class="grid gap-2">
               <Label for="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="m@example.com"
-                v-model="email"
+                placeholder="johndoe@quickdraw.com"
+                v-model="formData.email"
                 :class="{ 'border-red-500': errors.email }"
               />
               <span v-if="errors.email" class="text-sm text-red-500">{{
@@ -104,7 +129,7 @@ const onSubmit = () => {
               <Input
                 id="password"
                 type="password"
-                v-model="password"
+                v-model="formData.password"
                 :class="{ 'border-red-500': errors.password }"
               />
               <span v-if="errors.password" class="text-sm text-red-500">{{
@@ -116,7 +141,7 @@ const onSubmit = () => {
               <Input
                 id="confirm"
                 type="password"
-                v-model="confirmPassword"
+                v-model="formData.confirmPassword"
                 :class="{ 'border-red-500': errors.confirmPassword }"
               />
               <span

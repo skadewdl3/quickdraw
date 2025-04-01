@@ -1,7 +1,10 @@
-import { createAuthClient } from "better-auth/react";
+// import { createAuthClient } from "better-auth/vue";
 
-const config = useRuntimeConfig();
+// const config = useRuntimeConfig();
+// console.log(config);
 
-export const authClient = createAuthClient({
-  baseURL: config.public.BETTER_AUTH_URL,
-});
+// const auth = createAuthClient({
+//   baseURL: config.public.BETTER_AUTH_URL,
+// });
+
+// export default auth;
